@@ -76,6 +76,7 @@ def db_migrate():
             inserted_data = collection.insert_many(paginated_results)
             print(len(inserted_data.inserted_ids))
         print(f'Data fully migrated for {table_name}...')
+    print('Database completely migrated...')
 
 
 def run_db_migration():
