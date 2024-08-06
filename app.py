@@ -64,7 +64,7 @@ def db_migrate():
     tables = cursor.execute('SHOW TABLES')
 
     for table_name in tables:
-        print(f'Processing table ====> {table_name}')
+        print(f'Processing table ====> {table_name}\n')
         # create and populate the collections
         collection = mongodb_client_db[table_name]
 
@@ -74,9 +74,18 @@ def db_migrate():
 
             # bulk insert data into mongodb
             inserted_data = collection.insert_many(paginated_results)
-            print(len(inserted_data.inserted_ids))
-        print(f'Data fully migrated for {table_name}...')
-    print('Database completely migrated...')
+        total_documents = collection.count_documents({})
+        print(f'Total documents in the collection {table_name}: {total_documents}\n')
+        print(f'Data fully migrated for {table_name}...\n')
+    print('Database completely migrated. Rate our ETL script from 1 to 5.\n')
+    rating: str = input('Ratings:')
+    try:
+        if int(rating) < 4:
+            print('Uh oh!')
+        else:
+            print('Amazing...')
+    except ValueError:
+        print('Enter a valid number from 1 through 5!')
 
 
 def run_db_migration():
