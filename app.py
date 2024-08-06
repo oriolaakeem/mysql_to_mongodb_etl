@@ -69,6 +69,7 @@ def db_migrate(mysqldb_host: str, mysqldb_user: str, mysqldb_password: str, mysq
             # bulk insert data into mongodb
             inserted_data = collection.insert_many(paginated_results)
             print(len(inserted_data.inserted_ids))
+        print(f'Data fully migrated for {table_name}...')
 
 
 def run_db_migration():
