@@ -27,7 +27,13 @@ mycol = mydb["categories"]
 #         database='mydatabase',
 #     )
 
-def db_migrate(mysqldb_host: str, mysqldb_user: str, mysqldb_password: str, mysqldb_database: str, mongodb_connection_uri: str):
+def db_migrate():
+    mysqldb_host: str = input('Enter MySQL DB Host:')
+    mysqldb_user: str = input('Enter MySQL DB User:')
+    mysqldb_password: str = input('Enter MySQL DB Password:')
+    mysqldb_database: str = input('Enter MySQL DB Database name:')
+    mongodb_connection_uri: str = input('Enter MongoDB Connection URI:')
+
     # connect to MySQL DB
     try:
         mysqldb = mysql.connector.connect(
@@ -81,4 +87,5 @@ def run_db_migration():
 
 
 if __name__ == '__main__':
-    run_db_migration()
+    # run_db_migration()
+    db_migrate()
