@@ -99,7 +99,7 @@ def db_migrate():
                 # bulk insert data into mongodb
                 collection.insert_many(results)
 
-            print(f'Data fully migrated for {table_name}...\n')
+            print(f'{total_rows} records fully migrated for {table_name}...\n')
             total_documents = collection.count_documents({})
             print(f'Total documents in the collection {table_name}: {total_documents}\n')
 
