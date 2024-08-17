@@ -77,6 +77,13 @@ def db_migrate():
         total_documents = collection.count_documents({})
         print(f'Total documents in the collection {table_name}: {total_documents}\n')
         print(f'Data fully migrated for {table_name}...\n')
+
+        with open('migrated.txt', 'a') as f:
+            f.write(f'{table_name}')
+
+        # reset the connection
+        cursor.reset(free=True)
+
     print('Database completely migrated. Rate our ETL script from 1 to 5.\n')
     rating: str = input('Ratings:')
     try:
