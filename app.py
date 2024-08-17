@@ -210,5 +210,4 @@ def run_db_migration():
 
 
 if __name__ == '__main__':
-    # run_db_migration()
     db_migrate()
