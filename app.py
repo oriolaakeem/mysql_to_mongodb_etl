@@ -65,12 +65,21 @@ def db_migrate():
 
     for table_name in tables:
         print(f'Processing table ====> {table_name}\n')
+
+        try:
+            with open('migrated.txt', 'r') as f:
+                file_read = f.read()
+                if table_name in file_read:
+                    continue
+        except FileNotFoundError:
+            pass
+
         # create and populate the collections
         collection = mongodb_client_db[table_name]
 
         results = cursor.execute(f"SELECT * FROM {table_name}")
         if results:
-            paginated_results = cursor.fetchmany(100)
+            paginated_results = cursor.fetchmany(200)
 
             # bulk insert data into mongodb
             inserted_data = collection.insert_many(paginated_results)
