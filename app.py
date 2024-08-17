@@ -7,19 +7,8 @@ from faker import Faker
 from mysql.connector import errorcode
 from pymongo import MongoClient
 
-delete_existing_documents = True
 
-mysql_schema = "myschema"
-
-mongodb_host = "mongodb://localhost:27017/"
-
-mongodb_dbname = "mymongodb"
-
-myclient = MongoClient(mongodb_host)
-
-mydb = myclient[mongodb_dbname]
-
-mycol = mydb["categories"]
+MIGRATION_FILE_NAME: str = 'migrated.txt'
 
 
 def db_migrate():
@@ -49,7 +38,7 @@ def db_migrate():
             print(err)
         sys.exit(1)
 
-    generate_fake_data(mysqldb_host, mysqldb_port, mysqldb_user, mysqldb_password, mysqldb_database)
+    # generate_fake_data(mysqldb_host, mysqldb_port, mysqldb_user, mysqldb_password, mysqldb_database)
 
     # connect to MongoDB
     mongodb_client = MongoClient(mongodb_connection_uri)
@@ -58,7 +47,7 @@ def db_migrate():
     mongodb_client_db = mongodb_client[mysqldb_database]
 
     # instantiate MySQL DB cursor
-    cursor = mysqldb.cursor(dictionary=True)
+    cursor = mysqldb.cursor()
 
     # execute query
     cursor.execute('SHOW TABLES')
@@ -69,34 +58,57 @@ def db_migrate():
 
     if tables:
         for table_name in tables:
+            table_name = table_name[0]
             print(f'Processing table ====> {table_name}\n')
 
+            # SQL query to count the total number of rows
+            count_query = f"SELECT COUNT(*) FROM {table_name}"
+
+            cursor.execute(count_query)
+            # Fetch the count result
+            total_rows = cursor.fetchone()[0]
+            print(f"{total_rows} records found in the {table_name} table")
+
             try:
-                with open('migrated.txt', 'r') as f:
+                with open(f'{MIGRATION_FILE_NAME}') as f:
                     file_read = f.read()
-                    if f'{table_name}' in file_read:
+                    if table_name in file_read:
+                        print(f'{table_name} already migrated successfully!')
                         continue
             except FileNotFoundError:
                 pass
 
             # create and populate the collections
-            collection = mongodb_client_db[f'{table_name}']
+            collection = mongodb_client_db[table_name]
 
-            results = cursor.execute(f"SELECT * FROM {table_name}")
-            if results:
-                paginated_results = cursor.fetchmany(20)
+            cursor2 = mysqldb.cursor(dictionary=True)
+
+            offset: int = 0
+            page_size: int = 100
+
+            if not total_rows:
+                continue
+
+            while offset < total_rows:
+                cursor2.execute(f"SELECT * FROM {table_name} LIMIT {page_size} OFFSET {offset}")
+                results = cursor2.fetchall()
+
+                print(f'{offset} - {offset + page_size} of {total_rows} migrated...')
+                offset += page_size
 
                 # bulk insert data into mongodb
-                inserted_data = collection.insert_many(paginated_results)
+                collection.insert_many(results)
+
+            print(f'Data fully migrated for {table_name}...\n')
             total_documents = collection.count_documents({})
             print(f'Total documents in the collection {table_name}: {total_documents}\n')
-            print(f'Data fully migrated for {table_name}...\n')
 
-            with open('migrated.txt', 'a') as f:
-                f.write(f'{table_name}')
+            with open(f'{MIGRATION_FILE_NAME}', 'a') as f:
+                f.write(f'{table_name},')
 
             # reset the connection
             cursor.reset(free=True)
+            cursor2.reset(free=True)
     else:
         print('No tables found. \n Exiting...')
 
