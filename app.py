@@ -189,13 +189,6 @@ def generate_fake_data(mysqldb_host: str, mysqldb_port: str, mysqldb_user: str, 
                 VALUES (%s, %s)
                 """
 
-        # insert_query = f"""
-        #         INSERT INTO defaultdb (username, email, phone_number)
-        #         VALUES {(users_data[0], users_data[1], users_data[2])}
-        #         """
-
-        # print(f'users_data ====> {users_data}')
-
         # Execute the query with multiple data rows
         cursor.executemany(insert_users_query, users_data)
         cursor.executemany(insert_books_query, books_isbn_data)
