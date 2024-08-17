@@ -108,11 +108,18 @@ def db_migrate():
 
             # reset the connection
             cursor.reset(free=True)
-            cursor2.reset(free=True)
+
+            # close cursor2 connection
+            cursor2.close()
     else:
         print('No tables found. \n Exiting...')
 
     print('Database completely migrated. Rate our ETL script from 1 to 5.\n')
+
+    # close connections
+    cursor.close()
+    mysqldb.close()
+
     rating: str = input('Ratings:')
     try:
         if int(rating) < 4:
@@ -199,40 +206,6 @@ def generate_fake_data(mysqldb_host: str, mysqldb_port: str, mysqldb_user: str, 
         print(f"{cursor.rowcount} records inserted successfully into users table")
 
     print('Successfully generated data...')
-
-
-# def insert_users(users_data):
-#     try:
-#         connection = mysql.connector.connect(
-#             host='your_host',
-#             database='your_database',
-#             user='your_username',
-#             password='your_password'
-#         )
-#
-#         if connection.is_connected():
-#             cursor = connection.cursor()
-#
-#             insert_query = """
-#             INSERT INTO users (username, email, phone_number)
-#             VALUES (%s, %s, %s)
-#             """
-#
-#             # Execute the query with multiple data rows
-#             cursor.executemany(insert_query, users_data)
-#
-#             connection.commit()
-#
-#             print(f"{cursor.rowcount} records inserted successfully into users table")
-#
-#     except Exception as e:
-#         print(f"Error while connecting to MySQL: {e}")
-
-    # finally:
-    #     if connection.is_connected():
-    #         cursor.close()
-    #         connection.close()
-    #         print("MySQL connection is closed")
 
 
 def run_db_migration():
