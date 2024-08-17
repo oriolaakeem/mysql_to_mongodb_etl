@@ -1,5 +1,4 @@
 import argparse
-import random
 import sys
 
 import mysql.connector
@@ -22,12 +21,6 @@ mydb = myclient[mongodb_dbname]
 
 mycol = mydb["categories"]
 
-# mysqldb = mysql.connector.connect(
-#         host='localhost',
-#         user='myuser',
-#         password='********',
-#         database='mydatabase',
-#     )
 
 def db_migrate():
     mysqldb_host: str = input('Enter MySQL DB Host:')
@@ -56,7 +49,7 @@ def db_migrate():
             print(err)
         sys.exit(1)
 
-    # generate_fake_data(mysqldb_host, mysqldb_port, mysqldb_user, mysqldb_password, mysqldb_database)
+    generate_fake_data(mysqldb_host, mysqldb_port, mysqldb_user, mysqldb_password, mysqldb_database)
 
     # connect to MongoDB
     mongodb_client = MongoClient(mongodb_connection_uri)
@@ -67,8 +60,11 @@ def db_migrate():
     # instantiate MySQL DB cursor
     cursor = mysqldb.cursor(dictionary=True)
 
-    # retrieve all tables
-    tables = cursor.execute('SHOW TABLES')
+    # execute query
+    cursor.execute('SHOW TABLES')
+
+    # fetch all tables
+    tables = cursor.fetchall()
     print(f'All Tables ====> {tables}')
 
     if tables:
@@ -126,47 +122,70 @@ def generate_fake_data(mysqldb_host: str, mysqldb_port: str, mysqldb_user: str, 
         password=mysqldb_password,
         database=mysqldb_database
     )
-    print('Connecting...')
-    if mysqldb.is_connected():
-        print('Connection successful...')
+    print('Fake Data Generation...')
 
-    # mysql_cursor = mysqldb.cursor()
     fake = Faker()
-    # users_data = [fake.user_name(), random.randint(0, 99), fake.email()]
 
-    users_data = []
+    books_isbn_data: list = []
+    users_data: list = []
+
     for _ in range(100):
-        # users_data = [fake.user_name(), fake.email(), fake.phone_number()]
         users_data.append((fake.user_name(), fake.email(), fake.phone_number()))
-
-    # mysql_cursor.execute("CREATE DATABASE person")
-    # mysql_cursor.execute(f'INSERT INTO defaultdb (name, age, birth_day) VALUES ("%s", %d, "%s",);' % (row[0], row[1], row[2]))
-    # mysql_cursor.execute(f'INSERT INTO defaultdb (name, age, birth_day) VALUES ("%s", %d, "%s",);' % (row[0], row[1], row[2]))
-    # insert_users(users_data)
+        books_isbn_data.append((fake.isbn10(), fake.isbn13()))
 
     if mysqldb.is_connected():
+        print('generating data...')
         cursor = mysqldb.cursor()
 
-        # insert_query = """
-        # INSERT INTO defaultdb (username, email, phone_number)
-        # VALUES (%s, %s, %s)
-        # """
+        create_user_table_query = f"""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        username VARCHAR(100) NOT NULL,
+                        email VARCHAR(100) NOT NULL,
+                        phone_number VARCHAR(30) NOT NULL
+                    );
+                    """
 
-        insert_query = f"""
-                INSERT INTO defaultdb (username, email, phone_number)
-                VALUES {(users_data[0], users_data[1], users_data[2])}
+        cursor.execute(create_user_table_query)
+        print("Users table created successfully")
+
+        insert_users_query = """
+                INSERT INTO users (username, email, phone_number)
+                VALUES (%s, %s, %s)
                 """
 
-        print(f'users_data ====> {users_data}')
-        # Execute the query with multiple data rows
-        # cursor.executemany(insert_query, (users_data[0], users_data[1], users_data[2]))
-        cursor.executemany(insert_query, users_data)
+        create_book_table_query = f"""
+                                    CREATE TABLE IF NOT EXISTS books (
+                                        id INT AUTO_INCREMENT PRIMARY KEY,
+                                        isbn10 VARCHAR(100) NOT NULL,
+                                        isbn13 VARCHAR(100) NOT NULL
+                                    );
+                                    """
 
+        cursor.execute(create_book_table_query)
+        print("Books table created successfully")
+
+        insert_books_query = """
+                INSERT INTO books (isbn10, isbn13)
+                VALUES (%s, %s)
+                """
+
+        # insert_query = f"""
+        #         INSERT INTO defaultdb (username, email, phone_number)
+        #         VALUES {(users_data[0], users_data[1], users_data[2])}
+        #         """
+
+        # print(f'users_data ====> {users_data}')
+
+        # Execute the query with multiple data rows
+        cursor.executemany(insert_users_query, users_data)
+        cursor.executemany(insert_books_query, books_isbn_data)
+
+        # commit
         mysqldb.commit()
 
         print(f"{cursor.rowcount} records inserted successfully into users table")
 
-    mysqldb.commit()
     print('Successfully generated data...')
 
 
